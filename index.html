@@ -102,10 +102,13 @@
       updateCountdown();
     }
 
-    if (endTime) {
+    // Auto-resume if endTime exists and is still in the future
+    if (endTime && new Date().getTime() < endTime) {
       startBtn.classList.add("hidden");
       countdownInterval = setInterval(updateCountdown, 1000);
       updateCountdown();
+    } else {
+      localStorage.removeItem("countdownEnd"); // prevent false triggers
     }
 
     startBtn.addEventListener("click", startCountdown);
