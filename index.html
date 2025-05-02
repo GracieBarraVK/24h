@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gracie Barra Countdown</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    .countdown {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 15vw;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .button {
+      position: absolute;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid white;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 10;
+      transition: background-color 0.3s;
+    }
+
+    .button:hover {
+      background-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .start-button {
+      bottom: 20px;
+      right: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="fireworks"></canvas>
+  <div class="countdown" id="countdown">24:00:00</div>
+  <button class="button start-button" id="startBtn">Start</button>
+
+  <script>
+    const countdownElement = document.getElementById("countdown");
+    const startBtn = document.getElementById("startBtn");
+    let endTime = localStorage.getItem("countdownEnd");
+    let countdownInterval;
+
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const distance = endTime - now;
+
+      if (distance <= 0) {
+        clearInterval(countdownInterval);
+        countdownElement.innerHTML = "00:00:00";
+        showFireworks();
+        return;
+      }
+
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      countdownElement.innerHTML =
+        String(hours).padStart(2, '0') + ":" +
+        String(minutes).padStart(2, '0') + ":" +
+        String(seconds).padStart(2, '0');
+    }
+
+    function startCountdown() {
+      endTime = new Date().getTime() + 24 * 60 * 60 * 1000;
+      localStorage.setItem("countdownEnd", endTime);
+      startBtn.classList.add("hidden");
+      countdownInterval = setInterval(updateCountdown, 1000);
+      updateCountdown();
+    }
+
+    if (endTime) {
+      startBtn.classList.add("hidden");
+      countdownInterval = setInterval(updateCountdown, 1000);
+      updateCountdown();
+    }
+
+    startBtn.addEventListener("click", startCountdown);
+
+    function showFireworks() {
+      const canvas = document.getElementById('fireworks');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = [];
+
+      function random(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      function createParticle(x, y) {
+        const count = 150;
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x,
+            y,
+            radius: random(2, 4),
+            color: `hsl(${Math.floor(Math.random() * 360)}, 100%, 85%)`,
+            angle: Math.random() * 2 * Math.PI,
+            speed: random(3, 8),
+            alpha: 1,
+            decay: random(0.008, 0.015)
+          });
+        }
+      }
+
+      function updateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach((p, i) => {
+          p.x += Math.cos(p.angle) * p.speed;
+          p.y += Math.sin(p.angle) * p.speed;
+          p.alpha -= p.decay;
+
+          if (p.alpha <= 0) {
+            particles.splice(i, 1);
+          } else {
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.shadowColor = p.color;
+            ctx.shadowBlur = 20;
+            ctx.fill();
+          }
+        });
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+        requestAnimationFrame(updateParticles);
+      }
+
+      createParticle(canvas.width / 2, canvas.height / 2);
+      setInterval(() => {
+        createParticle(random(100, canvas.width - 100), random(100, canvas.height - 100));
+      }, 700);
+
+      updateParticles();
+    }
+  </script>
+</body>
+</html>
